@@ -1,29 +1,5 @@
 const MINUTES_IN_HOUR = 60;
 
-const input = `
-diCześć,
-
-Dnia 05.05.2025
-9:15 – 9:30      Kwestie bieżące                          N/A
-9:30 – 10:45     LPP – dump bazy                          IN_PROGRESS
-10:45 – 11:00    Kwestie bieżące                          N/A
-11:00 – 12:15    LPP – dump bazy                          IN_PROGRESS
-12:15 – 13:15    Kwestie bieżące                          N/A
-13:15 – 14:30    LPP – dump bazy                          IN_PROGRESS
-14:30 – 15:15    Confluence poprawki                      DONE
-15:15 – 15:45    LPP – dump bazy                          IN_PROGRESS
-15:45 – 17:00    Kursy GCP                                IN_PROGRESS 2/10
-
-Dalszy Plan 
-Zadanie LPP – Jenkins - dump bazy                         IN_PROGRESS
-Kursy GCP                                                 IN_PROGRESS 2/10
-
-Pozdrawiam
-Stanisław
-
-
-`;
-
 const timeRangeToDuration = (range: string) => {
   const [from, to] = range.split(/-|–/).map((el) => el.trim());
   const [startH, startM] = from.split(":").map(Number);
@@ -86,18 +62,19 @@ function mergeSimilarTasks(tasks: { taskName: string; duration: number }[]) {
   return merged;
 }
 
-const main = (input: string) => {
-  const regex = /^Dnia.*(?:\n(?!.*Pozdrawiam).*)*/gm
+export const convertStatusToWorklog = (input: string) => {
+  const regex = /^Dnia.*(?:\n(?!.*Pozdrawiam).*)*/gm;
   const match = input.match(regex);
 
   if (match) {
+    let result = "";
     const lines = match[0].split("\n");
     const data = lines.reduce(
       (
         acc: { timeRange: string; duration: number; taskName: string }[],
         line: string
       ) => {
-        if (isNaN(Number(line.at(0)))) {
+        if (isNaN(Number(line[0]))) {
           return acc;
         }
         const [timeRange, taskName] = line.split(/[ ]{2,}|\t+/);
@@ -116,29 +93,51 @@ const main = (input: string) => {
       ...task,
       duration: formatTime(convertMinutes(task.duration)),
     }));
+    const NEWLINE_CHAR = ";";
+    const SPACE_CHAR = ".";
     const longestTaskNameLen =
       Math.max(...merged.map((task) => task.taskName.length)) + 3;
     replaced.forEach((task) => {
       const nameLength = task.taskName.length;
       const spacesToPut = longestTaskNameLen - nameLength;
-      const space = Array.from({ length: spacesToPut }, (_) => " ").join("");
-      console.log(task.taskName + space + task.duration);
+      const space = Array.from({ length: spacesToPut }, (_) => SPACE_CHAR).join(
+        ""
+      );
+      result += task.taskName + space + task.duration;
+      result += NEWLINE_CHAR;
     });
     const TOTAL = "TOTAL";
     const divider = Array.from(
       { length: longestTaskNameLen + 6 },
       (_) => "-"
     ).join("");
-    console.log(divider);
-    console.log(
-      TOTAL +
-        Array.from(
-          { length: longestTaskNameLen - TOTAL.length - 1 },
-          (_) => " "
-        ).join(""),
-      formatTime(convertMinutes(totalTime))
-    );
+    result += divider;
+    result += NEWLINE_CHAR;
+    const spaceDots = Array.from(
+      { length: longestTaskNameLen - TOTAL.length },
+      (_) => SPACE_CHAR
+    ).join("");
+    result += TOTAL + spaceDots + formatTime(convertMinutes(totalTime));
+    return result;
   }
+  return "Invalid input";
 };
 
-main(input);
+export const exampleInput = `Cześć,
+
+Dnia 05.05.2025
+9:15 – 9:30     Daily                   N/A
+9:30 – 10:30    GCP Courses             IN_PROGRESS
+10:30 - 12:00   Project Task            IN_PROGRESS
+12:00 - 12:45   Rubber Duck Debugging   DONE
+
+13:15 – 15:15   Project Task            IN_PROGRESS
+15:15 – 16:00   GCP Courses             IN_PROGRESS
+
+Dalszy Plan                             IN_PROGRESS
+Project Task                            IN_PROGRESS
+GCP Courses                             
+
+Pozdrawiam
+XYZ
+`;
