@@ -107,7 +107,7 @@ export const convertStatusToWorklog = (
       duration:
         timeFormat === TimeFormat.HOURS_AND_MINUTES
           ? formatTime(convertMinutes(task.duration))
-          : task.duration / MINUTES_IN_HOUR,
+          : ((task.duration / MINUTES_IN_HOUR).toFixed(2).toString().replace('.', ',')),
     }));
     const NEWLINE_CHAR = ";";
     const SPACE_CHAR = ".";
@@ -138,7 +138,8 @@ export const convertStatusToWorklog = (
       spaceDots +
       (timeFormat === TimeFormat.HOURS_AND_MINUTES
         ? formatTime(convertMinutes(totalTime))
-        : totalTime / MINUTES_IN_HOUR);
+        : ((totalTime / MINUTES_IN_HOUR).toFixed(2).toString().replace('.', ','))
+      )
     return result;
   }
   return "Invalid input";
