@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { convertStatusToWorklog, exampleInput as exampleNote } from "./utils";
+import { convertStatusToWorklog, exampleInput as exampleNote, TimeFormat } from "./utils";
 
 function App() {
   const [worklog, setWorklog] = useState<string>("");
   const [note, setNote] = useState<string>("");
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>(TimeFormat.DECIMAL_HOURS);
 
   const convert = (e: any) => {
     const input = e.target.value;
     setNote(input);
   };
-  console.log(note)
 
   useEffect(() => {
-    const result: string = convertStatusToWorklog(note);
+    const result: string = convertStatusToWorklog(note, timeFormat);
     setWorklog(result);
-  }, [note]);
+  }, [note, timeFormat]);
 
   return (
     <>
-      <div>
+      <div style={{ display: "flex", flexDirection: "column"}}>
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
           <h2>Paste your status note here</h2>
           <button onClick={() => setNote(exampleNote)}>try an example</button>
@@ -30,6 +30,9 @@ function App() {
           style={{ width: 650, height: 200, fontSize: "0.75rem" }}
           placeholder={exampleNote}
         />
+        <button onClick={() => setTimeFormat(prevFormat => prevFormat === TimeFormat.DECIMAL_HOURS ? TimeFormat.HOURS_AND_MINUTES : TimeFormat.DECIMAL_HOURS) }>
+          {`change time format XXh YYm <-> H,HH`} 
+        </button>
         <h2>Your worklog</h2>
         <div
           style={{

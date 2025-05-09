@@ -1,5 +1,10 @@
 const MINUTES_IN_HOUR = 60;
 
+export enum TimeFormat {
+  DECIMAL_HOURS = "DECIMAL_HOURS",
+  HOURS_AND_MINUTES = "HOURS_AND_MINUTES ",
+}
+
 const timeRangeToDuration = (range: string) => {
   const [from, to] = range.split(/-|–/).map((el) => el.trim());
   const [startH, startM] = from.split(":").map(Number);
@@ -12,8 +17,13 @@ const timeRangeToDuration = (range: string) => {
   return durationMinutes;
 };
 
-const formatTime = ({ hours, minutes }: { hours: number; minutes: number }) =>
-  `${hours}h ${minutes}m`;
+const formatTime = ({
+  hours,
+  minutes,
+}: {
+  hours: number;
+  minutes: number;
+}): string => `${hours}h ${minutes}m`;
 
 function getWords(str: string): string[] {
   return str.toLowerCase().split(/\s+/);
@@ -62,7 +72,10 @@ function mergeSimilarTasks(tasks: { taskName: string; duration: number }[]) {
   return merged;
 }
 
-export const convertStatusToWorklog = (input: string) => {
+export const convertStatusToWorklog = (
+  input: string,
+  timeFormat = TimeFormat.DECIMAL_HOURS
+) => {
   const regex = /^Dnia.*(?:\n(?!.*Pozdrawiam).*)*/gm;
   const match = input.match(regex);
 
@@ -91,12 +104,15 @@ export const convertStatusToWorklog = (input: string) => {
     );
     const replaced = merged.map((task) => ({
       ...task,
-      duration: formatTime(convertMinutes(task.duration)),
+      duration:
+        timeFormat === TimeFormat.HOURS_AND_MINUTES
+          ? formatTime(convertMinutes(task.duration))
+          : task.duration / MINUTES_IN_HOUR,
     }));
     const NEWLINE_CHAR = ";";
     const SPACE_CHAR = ".";
     const longestTaskNameLen =
-      Math.max(...merged.map((task) => task.taskName.length)) + 3;
+      Math.max(...merged.map((task) => task.taskName.length)) + 3
     replaced.forEach((task) => {
       const nameLength = task.taskName.length;
       const spacesToPut = longestTaskNameLen - nameLength;
@@ -108,7 +124,7 @@ export const convertStatusToWorklog = (input: string) => {
     });
     const TOTAL = "TOTAL";
     const divider = Array.from(
-      { length: longestTaskNameLen + 6 },
+      { length: longestTaskNameLen + (timeFormat === TimeFormat.HOURS_AND_MINUTES ? 6 : 4) },
       (_) => "-"
     ).join("");
     result += divider;
@@ -117,7 +133,12 @@ export const convertStatusToWorklog = (input: string) => {
       { length: longestTaskNameLen - TOTAL.length },
       (_) => SPACE_CHAR
     ).join("");
-    result += TOTAL + spaceDots + formatTime(convertMinutes(totalTime));
+    result +=
+      TOTAL +
+      spaceDots +
+      (timeFormat === TimeFormat.HOURS_AND_MINUTES
+        ? formatTime(convertMinutes(totalTime))
+        : totalTime / MINUTES_IN_HOUR);
     return result;
   }
   return "Invalid input";
