@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { convertStatusToWorklog, exampleInput as exampleNote, TimeFormat } from "./utils";
+import { convertStatusToWorklog, exampleInput as exampleNote, TimeFormat, getTemplateMessage } from "./utils";
 
 function App() {
   const [worklog, setWorklog] = useState<string>("");
@@ -22,7 +22,14 @@ function App() {
       <div style={{ display: "flex", flexDirection: "column"}}>
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
           <h2>Paste your status note here</h2>
-          <button onClick={() => setNote(exampleNote)}>try an example</button>
+          <button onClick={() => {
+            setNote(exampleNote)
+            navigator.clipboard.writeText(exampleNote)
+          }}>copy an example</button>
+          <button onClick={() => {
+            navigator.clipboard.writeText(getTemplateMessage())
+            console.log("copied to clipboard")
+          }}>copy template</button>
         </div>
         <textarea
           onChange={convert}

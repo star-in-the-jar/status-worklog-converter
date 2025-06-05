@@ -78,6 +78,7 @@ export const convertStatusToWorklog = (
 ) => {
   const regex = /^Dnia.*(?:\n(?!.*Pozdrawiam).*)*/gm;
   const match = input.match(regex);
+  console.log("match: ", match)
 
   if (match) {
     let result = "";
@@ -107,12 +108,15 @@ export const convertStatusToWorklog = (
       duration:
         timeFormat === TimeFormat.HOURS_AND_MINUTES
           ? formatTime(convertMinutes(task.duration))
-          : ((task.duration / MINUTES_IN_HOUR).toFixed(2).toString().replace('.', ',')),
+          : (task.duration / MINUTES_IN_HOUR)
+              .toFixed(2)
+              .toString()
+              .replace(".", ","),
     }));
     const NEWLINE_CHAR = ";";
     const SPACE_CHAR = ".";
     const longestTaskNameLen =
-      Math.max(...merged.map((task) => task.taskName.length)) + 3
+      Math.max(...merged.map((task) => task.taskName.length)) + 3;
     replaced.forEach((task) => {
       const nameLength = task.taskName.length;
       const spacesToPut = longestTaskNameLen - nameLength;
@@ -124,7 +128,11 @@ export const convertStatusToWorklog = (
     });
     const TOTAL = "TOTAL";
     const divider = Array.from(
-      { length: longestTaskNameLen + (timeFormat === TimeFormat.HOURS_AND_MINUTES ? 6 : 4) },
+      {
+        length:
+          longestTaskNameLen +
+          (timeFormat === TimeFormat.HOURS_AND_MINUTES ? 6 : 4),
+      },
       (_) => "-"
     ).join("");
     result += divider;
@@ -138,8 +146,10 @@ export const convertStatusToWorklog = (
       spaceDots +
       (timeFormat === TimeFormat.HOURS_AND_MINUTES
         ? formatTime(convertMinutes(totalTime))
-        : ((totalTime / MINUTES_IN_HOUR).toFixed(2).toString().replace('.', ','))
-      )
+        : (totalTime / MINUTES_IN_HOUR)
+            .toFixed(2)
+            .toString()
+            .replace(".", ","));
     return result;
   }
   return "Invalid input";
@@ -163,3 +173,43 @@ GCP Courses
 Pozdrawiam
 XYZ
 `;
+
+function getCurrentDateFormatted() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-indexed
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${day}.${month}.${year}`;
+}
+
+function getRoundedTime(): string {
+  const now = new Date();
+  const minutes = now.getMinutes();
+  const roundedMinutes = Math.round(minutes / 15) * 15;
+
+  // Handle edge case: if rounding goes to 60, roll over to next hour
+  if (roundedMinutes === 60) {
+    now.setHours(now.getHours() + 1);
+    now.setMinutes(0);
+  } else {
+    now.setMinutes(roundedMinutes);
+  }
+
+  const hours = String(now.getHours()).padStart(2, "0");
+  const mins = String(now.getMinutes()).padStart(2, "0");
+  return `${hours}:${mins}`;
+}
+
+export const getTemplateMessage = () => {
+  const date = getCurrentDateFormatted();
+  const message = `Cześć,
+
+Dnia ${date} 
+${getRoundedTime()} - HH:MM\tDescription\tSTATUS
+
+Pozdrawiam
+
+`;
+
+  return message;
+};
